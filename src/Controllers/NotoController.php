@@ -1,7 +1,7 @@
 <?php
-namespace Agif\Noto\Controllers;
+namespace Agifsofyan\Noto\Controllers;
 
-use Agif\Noto\Noto;
+use Agifsofyan\Noto\Noto;
 
 class NotoController
 {

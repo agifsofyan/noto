@@ -1,15 +1,18 @@
 {
-    "name": "agif/noto",
+    "name": "agifsofyan/noto",
     "description": "This is a plugin/package to use the file system from Octobercms to work on laravel. This plugin will be very helpful if you have 2 projects (Laravel & Octobercms) with the same 1 DB.",
     "license": "MIT",
     "autoload": {
+        "files": [
+            "agifsofyan/noto/helpers/helpers.php"
+        ],
         "psr-4": {
-            "Agif\\Noto\\": "src/"
+            "Agifsofyan\\Noto\\": "src/"
         }
     },
     "authors": [
         {
-            "name": "Agif",
+            "name": "Agif Sofyan",
             "email": "alpenizme@gmail.com"
         }
     ],

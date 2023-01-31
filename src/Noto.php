@@ -1,6 +1,6 @@
 <?php
 
-namespace Agif\Noto;
+namespace Agifsofyan\Noto;
 
 class Noto
 {
