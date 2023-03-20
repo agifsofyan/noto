@@ -3,9 +3,6 @@
     "description": "This is a plugin/package to use the file system from Octobercms to work on laravel. This plugin will be very helpful if you have 2 projects (Laravel & Octobercms) with the same 1 DB.",
     "license": "MIT",
     "autoload": {
-        "files": [
-            "agifsofyan/noto/helpers/helpers.php"
-        ],
         "psr-4": {
             "Agifsofyan\\Noto\\": "src/"
         }
