@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File as FileHelper;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
-use Agifsofyan\Noto\Helpers\Resizer;
+use Intervention\Image\Facades\Image;
 
 /**
  * File attachment model
@@ -25,15 +25,7 @@ class NotoModel extends Model
     /**
      * @var string table in database used by the model
      */
-    protected $table = 'system_files';
-
-    /**
-     * @var array morphTo relation
-     */
-    public function attachment()
-    {
-        return $this->morphTo();
-    }
+    protected $table;
 
     /**
      * @var array fillable attributes are mass assignable
@@ -93,112 +85,9 @@ class NotoModel extends Model
         'svg'  => 'image/svg+xml',
     ];
 
-    private function setOctoberModel($model)
+    public function __construct()
     {
-        $octoPath = null;
-
-        $fileConfig = config('filesystems.noto');
-        $modelPath  = sprintf("%s\\", $fileConfig['model_path']);
-        $modelSync  = $fileConfig['model_sync'];
-
-        $modelName = str_replace($modelPath,'',$model);
-
-        if(isset($modelSync[$modelName])) $octoPath = $modelSync[$modelName];
-
-        return $octoPath;
-    }
-
-    public function getFileByAttachmentId($model, $field, $list = false, $fullData = false)
-    {
-        if(!$model->id) return $this->getFileObj(null);
-
-        $query = static::where('attachment_id', $model->id)->where('field', $field);
-
-        if(!is_null($model)){
-            $modelPath = $this->setOctoberModel(get_class($model));
-
-            if(!is_null($modelPath)){
-                $query = $query->where('attachment_type', $modelPath);
-            }
-        }
-
-        if($list === true){
-            $result = $query->get();
-
-
-            if($fullData === true) return $result;
-
-            if(sizeof($result) > 0){
-                return $result->map(function($val){
-                    return $this->getFileObj($val);
-                });
-            }else{
-                return $result;
-            }
-
-        }else{
-            $result = $query->first();
-
-            if($fullData === true) return $result;
-
-            return $this->getFileObj($result);
-        }
-    }
-
-    private function getFileObj($media, $width = 190, $height = 190)
-    {
-        return (object) [
-            'original' => !$media ? null : $media->getPath(),
-            'thumbnail' => !$media ? null : $media->getThumb($width, $height)
-        ];
-    }
-
-    /**
-     * fromPost creates a file object from a file an uploaded file
-     * @param UploadedFile $uploadedFile
-     * @return $this
-     */
-    public function fromPost($uploadedFile, $model, $field)
-    {
-        if ($uploadedFile === null || !$model->id) return;
-
-        $modelPath = $this->setOctoberModel(get_class($model));
-
-        $fileData = self::whereNotNull('attachment_id')
-            ->where('attachment_id', $model->id)
-            ->where('attachment_type', $modelPath)
-            ->first();
-            
-        $this->file_name = $uploadedFile->getClientOriginalName();
-        $this->file_size = $uploadedFile->getSize();
-        $this->content_type = $uploadedFile->getMimeType();
-        $this->disk_name = $this->getDiskName();
-        $this->field = $field;
-        $this->attachment_id = $model->id;
-        $this->attachment_type = (string) $modelPath;
-
-        // getRealPath() can be empty for some environments (IIS)
-        $realPath = empty(trim($uploadedFile->getRealPath()))
-        ? $uploadedFile->getPath() . DIRECTORY_SEPARATOR . $uploadedFile->getFileName()
-        : $uploadedFile->getRealPath();
-
-        $args = collect($this)->except('path', 'extension')->toArray();
-
-        if(!is_null($fileData)){
-            $tempData = clone $fileData;
-            $storeData = $fileData->update($args);
-        }else{
-            $tempData = null;
-            $storeData = self::save($args);
-        }
-
-        if($storeData){
-            $this->putFile($realPath, $this->disk_name);
-
-            if(!is_null($tempData)) $tempData->deleteFile();
-        }
-
-        return $this->getDiskPath();
+        $this->table = config('noto.file_table', 'system_files');
     }
 
     /**
@@ -540,10 +429,9 @@ class NotoModel extends Model
         /*
          * Generate thumbnail
          */
-        Resizer::open($filePath)
-            ->resize($width, $height, $options)
-            ->save($thumbPath)
-        ;
+        Image::make($filePath)->resize($width, $height, function ($constraint) {
+            $constraint->aspectRatio();
+        })->save($thumbPath);
 
         FileHelper::chmod($thumbPath);
     }
@@ -561,9 +449,9 @@ class NotoModel extends Model
         try {
             $this->copyStorageToLocal($this->getDiskPath(), $tempFile);
 
-            Resizer::open($tempFile)
-            ->resize($width, $height, $options)
-            ->save($tempFile);
+            Image::make($tempFile)->resize($width, $height, function ($constraint) {
+                $constraint->aspectRatio();
+            })->save($tempFile);
         }finally{
             /*
             * Publish to storage and clean up
@@ -585,7 +473,7 @@ class NotoModel extends Model
         $allFiles = $this->storageCmd('files', $directory);
         $collection = [];
         foreach ($allFiles as $file) {
-            if (starts_with(basename($file), $pattern)) {
+            if (\Illuminate\Support\Str::startsWith(basename($file), $pattern)) {
                 $collection[] = $file;
             }
         }
@@ -614,7 +502,7 @@ class NotoModel extends Model
     /**
      * getDiskName generates a disk name from the supplied file name
      */
-    protected function getDiskName()
+    public function getDiskName()
     {
         if ($this->disk_name !== null) {
             return $this->disk_name;
@@ -643,7 +531,7 @@ class NotoModel extends Model
      * @param string $sourcePath An absolute local path to a file name to read from.
      * @param string $destinationFileName A storage file name to save to.
      */
-    protected function putFile($sourcePath, $destinationFileName = null)
+    public function putFile($sourcePath, $destinationFileName = null)
     {
         if (!$destinationFileName) {
             $destinationFileName = $this->disk_name;
@@ -694,12 +582,10 @@ class NotoModel extends Model
         if ($this->storageCmd('exists', $filePath)) {
             $this->storageCmd('delete', $filePath);
         }
-
+        
         // Clear remote storage cache
-        if (!$this->isLocalStorage()) {
-            Cache::forget($this->getCacheKey($filePath));
-        }
-
+        Cache::forget($this->getCacheKey($filePath));
+        
         $this->deleteThumbs();
         $this->deleteEmptyDirectory($directory);
     }
@@ -707,7 +593,7 @@ class NotoModel extends Model
     /**
      * hasFile checks file exists on storage device
      */
-    protected function hasFile($fileName = null)
+    public function hasFile($fileName = null)
     {
         $filePath = $this->getDiskPath($fileName);
 
