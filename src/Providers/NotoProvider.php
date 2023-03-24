@@ -38,7 +38,7 @@ class NotoProvider extends ServiceProvider
             
             $this->publishes([
                 __DIR__.'/../config/noto.php' => config_path('noto.php'),
-              ], 'config');
+              ], 'noto-config');
         }
     }
 }
