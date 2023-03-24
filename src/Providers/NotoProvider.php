@@ -13,7 +13,19 @@ class NotoProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->loadMigrationsFrom (__DIR__.'/../database/migrations');
+        if ($this->app->runningInConsole()) {
+
+            $this->publishes([
+              __DIR__.'/../config/noto.php' => config_path('noto.php'),
+            ], 'config');
+
+            $this->publishes([__DIR__.'/../database/migrations'], 'migration');
+        
+          }
+    }
+
+    public function register()
+    {
         $this->mergeConfigFrom(__DIR__.'/../config/noto.php','noto');
     }
 }
