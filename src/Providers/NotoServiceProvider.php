@@ -52,7 +52,7 @@ class NotoServiceProvider extends ServiceProvider
     protected function migratePublishing()
     {
         if ($this->app->runningInConsole()) {
-            $migrationFileName = 'Db_System_Files';
+            $migrationFileName = '2023_01_31_000001_Db_System_Files';
             if (! $this->migrationFileExists($migrationFileName)) {
                 $this->publishes([
                     __DIR__ . "/../database/migrations/{$migrationFileName}.php" => database_path('migrations/' . date('Y_m_d_His', time()) . '_' . $migrationFileName),
