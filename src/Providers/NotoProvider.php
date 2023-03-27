@@ -13,18 +13,18 @@ class NotoProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->registerMigrations();
         $this->configurePublishing();
+        $this->migratePublishing();
     }
 
     /**
-     * Register Noto migration files.
+     * Merge Config files.
      *
      * @return void
      */
-    protected function registerMigrations()
+    public function register()
     {
-        return $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        $this->mergeConfigFrom(__DIR__ . '/../config/noto.php', 'noto');
     }
 
     /**
@@ -38,7 +38,36 @@ class NotoProvider extends ServiceProvider
             
             $this->publishes([
                 __DIR__.'/../config/noto.php' => config_path('noto.php'),
-              ], 'noto-config');
+              ], 'config');
         }
+    }
+
+    /**
+     * Migrate publishing for the package.
+     *
+     * @return void
+     */
+    protected function migratePublishing()
+    {
+        if ($this->app->runningInConsole()) {
+            $migrationFileName = '2023_01_31_000001_Db_System_Files.php';
+            if (! $this->migrationFileExists($migrationFileName)) {
+                $this->publishes([
+                    __DIR__ . "/../database/migrations/{$migrationFileName}.stub" => database_path('migrations/' . date('Y_m_d_His', time()) . '_' . $migrationFileName),
+                ], 'migrations');
+            }
+        }
+    }
+
+    public static function migrationFileExists(string $migrationFileName): bool
+    {
+        $len = strlen($migrationFileName);
+        foreach (glob(database_path("migrations/*.php")) as $filename) {
+            if ((substr($filename, -$len) === $migrationFileName)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
