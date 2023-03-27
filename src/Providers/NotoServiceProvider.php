@@ -15,6 +15,8 @@ class NotoProvider extends ServiceProvider
     {
         $this->configurePublishing();
         $this->migratePublishing();
+
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
     }
 
     /**
