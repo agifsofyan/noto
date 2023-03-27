@@ -56,7 +56,7 @@ class NotoServiceProvider extends ServiceProvider
             if (! $this->migrationFileExists($migrationFileName)) {
                 $this->publishes([
                     __DIR__ . "/../database/migrations/{$migrationFileName}.php" => database_path('migrations/' . date('Y_m_d_His', time()) . '_' . $migrationFileName),
-                ], 'systemfiles-migrations');
+                ], 'noto-migrations');
             }
         }
     }
