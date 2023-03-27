@@ -4,7 +4,7 @@ namespace Agifsofyan\Noto\Providers;
 
 use Illuminate\Support\ServiceProvider;
 
-class NotoProvider extends ServiceProvider
+class NotoServiceProvider extends ServiceProvider
 {
     /**
      * Bootstrap services.

@@ -36,7 +36,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Agifsofyan\\Noto\\Providers\\NotoProvider"
+                "Agifsofyan\\Noto\\Providers\\NotoServiceProvider"
             ]
         }
     }
