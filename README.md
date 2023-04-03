@@ -111,6 +111,7 @@ Will create :
   If update data use ``$user->save()`` don't use ``$user->update()``.
 
 * Call the File Url
+  
   Call the thumbnail file:
   ```php
   $user?->avatar()?->getThumb(150, 150)
